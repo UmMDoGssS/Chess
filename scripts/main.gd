@@ -3,9 +3,10 @@ extends Node2D
 
 @onready var BOARD_LAYER: TileMapLayer = get_node("Board")
 @onready var PIECE_LAYER: TileMapLayer = get_node("Piece")
+@onready var HIGHLIGHT_LAYER: TileMapLayer = get_node("Highlight")
 @onready var GET_MOVABLE: Node2D = get_node("GetMovable")
 const GRID_SIZE: int = 8
-const OFFSET: int = 1
+const OFFSET: int = 128
 const LAYOUT: String = "rnbqkbnr"
 var piece_atlas_map: Dictionary
 var board_pos: Array
@@ -21,12 +22,14 @@ var selected_piece_pos: Vector2i = Vector2i(-1, -1)
 
 
 func gen_piece_atlas_dict() -> void:
-	var pieces: String = "pnrbkq"
+	var pieces: String = "kqrbnp"
+	var count: int = 2
 	
-	for i: int in range(len(pieces)):
-		var piece: String = pieces[i]
-		piece_atlas_map[piece] = Vector2i(i * OFFSET, 0) # Black
-		piece_atlas_map[piece.to_upper()] = Vector2i(i * OFFSET, 0) # White
+	for piece: String in pieces:
+		piece_atlas_map[piece.to_upper()] = count # White
+		piece_atlas_map[piece] = count + 1 # Black
+		
+		count += 2
 
 
 func is_dark_sq(pos: Vector2i) -> bool:
@@ -73,9 +76,9 @@ func gen_board() -> void:
 			board_pos[i][j] = "-"
 			
 			if is_dark_sq(Vector2i(i, j)):
-				BOARD_LAYER.set_cell(Vector2i(i * OFFSET, j * OFFSET), 0, Vector2i(1 * OFFSET, 0))
+				BOARD_LAYER.set_cell(Vector2i(i, j), 0, Vector2i(0, 0))
 			else:
-				BOARD_LAYER.set_cell(Vector2i(i * OFFSET, j * OFFSET), 0, Vector2i(0, 0))
+				BOARD_LAYER.set_cell(Vector2i(i, j), 0, Vector2i(1, 0))
 
 
 func place_piece(piece: String, pos: Vector2i) -> void:
@@ -87,7 +90,7 @@ func place_piece(piece: String, pos: Vector2i) -> void:
 		black_king_pos = pos
 
 	if piece == "-":
-		PIECE_LAYER.set_cell(Vector2i(pos.x * OFFSET, pos.y * OFFSET))
+		PIECE_LAYER.set_cell(Vector2i(pos.x, pos.y))
 		return
 			
 	if piece == "P" && pos.y == 0:
@@ -99,9 +102,9 @@ func place_piece(piece: String, pos: Vector2i) -> void:
 		return
 	
 	if is_white_piece(piece): # White
-		PIECE_LAYER.set_cell(Vector2i(pos.x * OFFSET, pos.y * OFFSET), 1, piece_atlas_map[piece])
+		PIECE_LAYER.set_cell(Vector2i(pos.x, pos.y), piece_atlas_map[piece], Vector2i(0, 0))
 	else: # Black
-		PIECE_LAYER.set_cell(Vector2i(pos.x * OFFSET, pos.y * OFFSET), 2, piece_atlas_map[piece])
+		PIECE_LAYER.set_cell(Vector2i(pos.x, pos.y), piece_atlas_map[piece], Vector2i(0, 0))
 
 
 func set_board(layout: String) -> void:
@@ -153,19 +156,13 @@ func highlight_movable(highlight: bool) -> void:
 			for j: int in range(GRID_SIZE):
 				var sq: Vector2i = Vector2i(i, j)
 				
-				if is_dark_sq(sq):
-					BOARD_LAYER.set_cell(sq, 0, Vector2i(1 * OFFSET, 0), 0)
-				else:
-					BOARD_LAYER.set_cell(sq, 0, Vector2i(0, 0), 0)
+				HIGHLIGHT_LAYER.set_cell(sq)
 		return
 	
 	highlight_movable(false)
 	
 	for sq: Vector2i in movable:
-		if is_dark_sq(sq):
-			BOARD_LAYER.set_cell(sq, 0, Vector2i(3 * OFFSET, 0), 0)
-		else:
-			BOARD_LAYER.set_cell(sq, 0, Vector2i(2 * OFFSET, 0), 0)
+		HIGHLIGHT_LAYER.set_cell(sq, 1, Vector2i(0, 0), 0)
 
 
 func get_movable_sq(pos: Vector2i) -> void:
@@ -198,20 +195,6 @@ func get_movable_sq(pos: Vector2i) -> void:
 			movable = GET_MOVABLE.king(pos, false)
 			
 	highlight_movable(true)
-	
-	#for i in range(GRID_SIZE):
-		#for j in range(GRID_SIZE):
-			#var sq: Vector2i = Vector2i(i, j)
-			#if sq in movable:
-				#if is_dark_sq(sq):
-					#BOARD_LAYER.set_cell(sq, 0, Vector2i(3, 0), 0)
-				#else:
-					#BOARD_LAYER.set_cell(sq, 0, Vector2i(2, 0), 0)
-			#else:
-				#if is_dark_sq(sq):
-					#BOARD_LAYER.set_cell(sq, 0, Vector2i(1, 0), 0)
-				#else:
-					#BOARD_LAYER.set_cell(sq, 0, Vector2i(0, 0), 0)
 
 
 func _ready() -> void:
@@ -225,7 +208,7 @@ func _input(event) -> void:
 		if event.get_button_index() != MOUSE_BUTTON_LEFT || !event.is_pressed():
 			return
 			
-		var click_pos: Vector2i = click_to_coord(BOARD_LAYER.local_to_map(get_local_mouse_position()))
+		var click_pos: Vector2i = BOARD_LAYER.local_to_map(get_local_mouse_position())
 		
 		if click_pos.x < 0 || click_pos.y < 0 || click_pos.x >= GRID_SIZE * OFFSET || click_pos.y >= GRID_SIZE * OFFSET:
 			return
