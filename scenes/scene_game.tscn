@@ -1,0 +1,58 @@
+[gd_scene load_steps=11 format=3 uid="uid://dyuc2si2hox7x"]
+
+[ext_resource type="Texture2D" uid="uid://ddwwvdytfjv8t" path="res://assets/board1.png" id="1_e06a0"]
+[ext_resource type="Texture2D" uid="uid://cnposydg1fdk1" path="res://assets/white1.png" id="2_mjaif"]
+[ext_resource type="Texture2D" uid="uid://d1kyy5fdvlm4t" path="res://assets/black1.png" id="3_oua5p"]
+[ext_resource type="Script" path="res://scripts/get_movable.gd" id="5_0umbl"]
+[ext_resource type="Script" path="res://scripts/main.gd" id="5_7eyjj"]
+[ext_resource type="Script" path="res://scripts/camera.gd" id="5_rl83d"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_104sv"]
+resource_name = "board1"
+texture = ExtResource("1_e06a0")
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_tdnpu"]
+resource_name = "white1"
+texture = ExtResource("2_mjaif")
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+4:0/0 = 0
+5:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_nhixa"]
+resource_name = "black1"
+texture = ExtResource("3_oua5p")
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+4:0/0 = 0
+5:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_ujwpu"]
+sources/0 = SubResource("TileSetAtlasSource_104sv")
+sources/1 = SubResource("TileSetAtlasSource_tdnpu")
+sources/2 = SubResource("TileSetAtlasSource_nhixa")
+
+[node name="Game" type="Node2D"]
+script = ExtResource("5_7eyjj")
+
+[node name="GetMovable" type="Node2D" parent="."]
+script = ExtResource("5_0umbl")
+
+[node name="Camera" type="Camera2D" parent="."]
+script = ExtResource("5_rl83d")
+
+[node name="Board" type="TileMapLayer" parent="."]
+use_parent_material = true
+tile_set = SubResource("TileSet_ujwpu")
+
+[node name="Piece" type="TileMapLayer" parent="."]
+use_parent_material = true
+tile_set = SubResource("TileSet_ujwpu")
