@@ -11,6 +11,19 @@ func is_white_piece(piece: String) -> bool:
 	return piece == piece.to_upper()
 
 
+func place_or_take_if_able(pos: Vector2i, white: bool, movable: Array) -> void:
+	if piece_at(pos) == "-":
+		movable.push_back(pos)
+		return
+	
+	if white && is_white_piece(piece_at(pos)):
+		return
+	elif !white && !is_white_piece(piece_at(pos)):
+		return
+	
+	movable.push_back(pos)
+
+
 func pawn_white(pos: Vector2i) -> Array:
 	var movable: Array
 	if piece_at(Vector2i(pos.x, pos.y - 1)) == "-":
@@ -33,7 +46,7 @@ func pawn_white(pos: Vector2i) -> Array:
 
 		elif pos.y == 3 && GAME.can_be_captured_ep.x == pos.x - 1 && piece_at(Vector2i(pos.x - 1, 3)) == "p":
 			movable.push_back(Vector2i(pos.x - 1, pos.y - 1))
-			GAME.GAME.is_ep_capture = true
+			GAME.is_ep_capture = true
 
 	
 	if pos.x < GAME.GRID_SIZE - 1:
@@ -68,7 +81,7 @@ func pawn_black(pos: Vector2i) -> Array:
 			if is_white_piece(piece_at(Vector2i(pos.x - 1, pos.y + 1))):
 				movable.push_back(Vector2i(pos.x - 1, pos.y + 1))
 
-		elif pos.y == GAME.OFFSET - 4 && GAME.can_be_captured_ep.x == pos.x - 1 && piece_at(Vector2i(pos.x - 1, GAME.OFFSET - 4)) == "p":
+		elif pos.y == GAME.GRID_SIZE - 4 && GAME.can_be_captured_ep.x == pos.x - 1 && piece_at(Vector2i(pos.x - 1, GAME.GRID_SIZE - 4)) == "p":
 			movable.push_back(Vector2i(pos.x - 1, pos.y + 1))
 			GAME.is_ep_capture = true
 
@@ -77,7 +90,7 @@ func pawn_black(pos: Vector2i) -> Array:
 			if is_white_piece(piece_at(Vector2i(pos.x + 1, pos.y + 1))):
 				movable.push_back(Vector2i(pos.x + 1, pos.y + 1))
 
-		elif pos.y == GAME.OFFSET - 4 && GAME.can_be_captured_ep.x == pos.x + 1 && piece_at(Vector2i(pos.x + 1, GAME.OFFSET - 4)) == "p":
+		elif pos.y == GAME.GRID_SIZE - 4 && GAME.can_be_captured_ep.x == pos.x + 1 && piece_at(Vector2i(pos.x + 1, GAME.GRID_SIZE - 4)) == "p":
 			movable.push_back(Vector2i(pos.x + 1, pos.y + 1))
 			GAME.is_ep_capture = true
 
@@ -86,99 +99,30 @@ func pawn_black(pos: Vector2i) -> Array:
 
 func knight(pos: Vector2i, white: bool) -> Array:
 	var movable: Array
-	# = k =
 	
 	if pos.x > 1 && pos.y > 0:
-		if piece_at(Vector2i(pos.x - 2, pos.y - 1)) == "-":
-			movable.push_back(Vector2i(pos.x - 2, pos.y - 1))
-		
-		if white && is_white_piece(piece_at(Vector2i(pos.x - 2, pos.y - 1))):
-			pass
-		elif !white && !is_white_piece(piece_at(Vector2i(pos.x - 2, pos.y - 1))):
-			pass
-		else:
-			movable.push_back(Vector2i(pos.x - 2, pos.y - 1))
+		place_or_take_if_able(Vector2i(pos.x - 2, pos.y - 1), white, movable)
 	
 	if pos.x > 1 && pos.y < GAME.GRID_SIZE - 1:
-		if piece_at(Vector2i(pos.x - 2, pos.y + 1)) == "-":
-			movable.push_back(Vector2i(pos.x - 2, pos.y + 1))
-		
-		if white && is_white_piece(piece_at(Vector2i(pos.x - 2, pos.y + 1))):
-			pass
-		elif !white && !is_white_piece(piece_at(Vector2i(pos.x - 2, pos.y + 1))):
-			pass
-		else:
-			movable.push_back(Vector2i(pos.x - 2, pos.y + 1))
+		place_or_take_if_able(Vector2i(pos.x - 2, pos.y + 1), white, movable)
 	
 	if pos.x < GAME.GRID_SIZE - 2 && pos.y > 0:
-		if piece_at(Vector2i(pos.x + 2, pos.y - 1)) == "-":
-			movable.push_back(Vector2i(pos.x + 2, pos.y - 1))
-		
-		if white && is_white_piece(piece_at(Vector2i(pos.x + 2, pos.y - 1))):
-			pass
-		elif !white && !is_white_piece(piece_at(Vector2i(pos.x + 2, pos.y - 1))):
-			pass
-		else:
-			movable.push_back(Vector2i(pos.x + 2, pos.y - 1))
+		place_or_take_if_able(Vector2i(pos.x + 2, pos.y - 1), white, movable)
 	
 	if pos.x < GAME.GRID_SIZE - 2 && pos.y < GAME.GRID_SIZE - 1:
-		if piece_at(Vector2i(pos.x + 2, pos.y + 1)) == "-":
-			movable.push_back(Vector2i(pos.x + 2, pos.y + 1))
-		
-		if white && is_white_piece(piece_at(Vector2i(pos.x + 2, pos.y + 1))):
-			pass
-		elif !white && !is_white_piece(piece_at(Vector2i(pos.x + 2, pos.y + 1))):
-			pass
-		else:
-			movable.push_back(Vector2i(pos.x + 2, pos.y + 1))
-		
-	# |   |
-	#   k
-	# |   |
-		
+		place_or_take_if_able(Vector2i(pos.x + 2, pos.y + 1), white, movable)
+
 	if pos.x > 0 && pos.y > 1:
-		if piece_at(Vector2i(pos.x - 1, pos.y - 2)) == "-":
-			movable.push_back(Vector2i(pos.x - 1, pos.y - 2))
-		
-		if white && is_white_piece(piece_at(Vector2i(pos.x - 1, pos.y - 2))): # White takes white
-			pass
-		elif !white && !is_white_piece(piece_at(Vector2i(pos.x - 1, pos.y - 2))): # Black takes black
-			pass
-		else:
-			movable.push_back(Vector2i(pos.x - 1, pos.y - 2))
+		place_or_take_if_able(Vector2i(pos.x - 1, pos.y - 2), white, movable)
 		
 	if pos.x < GAME.GRID_SIZE - 1 && pos.y > 1:
-		if piece_at(Vector2i(pos.x + 1, pos.y - 2)) == "-":
-			movable.push_back(Vector2i(pos.x + 1, pos.y - 2))
-		
-		if white && is_white_piece(piece_at(Vector2i(pos.x + 1, pos.y - 2))):
-			pass
-		elif !white && !is_white_piece(piece_at(Vector2i(pos.x + 1, pos.y - 2))):
-			pass
-		else:
-			movable.push_back(Vector2i(pos.x + 1, pos.y - 2))
+		place_or_take_if_able(Vector2i(pos.x + 1, pos.y - 2), white, movable)
 		
 	if pos.x > 0 && pos.y < GAME.GRID_SIZE - 2:
-		if piece_at(Vector2i(pos.x - 1, pos.y + 2)) == "-":
-			movable.push_back(Vector2i(pos.x - 1, pos.y + 2))
-		
-		if white && is_white_piece(piece_at(Vector2i(pos.x - 1, pos.y + 2))):
-			pass
-		elif !white && !is_white_piece(piece_at(Vector2i(pos.x - 1, pos.y + 2))):
-			pass
-		else:
-			movable.push_back(Vector2i(pos.x - 1, pos.y + 2))
+		place_or_take_if_able(Vector2i(pos.x - 1, pos.y + 2), white, movable)
 
 	if pos.x < GAME.GRID_SIZE - 1 && pos.y < GAME.GRID_SIZE - 2:
-		if piece_at(Vector2i(pos.x + 1, pos.y + 2)) == "-":
-			movable.push_back(Vector2i(pos.x + 1, pos.y + 2))
-		
-		if white && is_white_piece(piece_at(Vector2i(pos.x + 1, pos.y + 2))):
-			pass
-		elif !white && !is_white_piece(piece_at(Vector2i(pos.x + 1, pos.y + 2))):
-			pass
-		else:
-			movable.push_back(Vector2i(pos.x + 1, pos.y + 2))
+		place_or_take_if_able(Vector2i(pos.x + 1, pos.y + 2), white, movable)
 
 	return movable
 
@@ -204,12 +148,13 @@ func bishop(pos: Vector2i, white: bool) -> Array:
 
 			if piece_at(tmp_pos) == "-":
 				movable.push_back(tmp_pos)
+			elif white && !is_white_piece(piece_at(tmp_pos)):
+				movable.push_back(tmp_pos)
+				break
+			elif !white && is_white_piece(piece_at(tmp_pos)):
+				movable.push_back(tmp_pos)
+				break
 			else:
-				if white && !is_white_piece(piece_at(tmp_pos)):
-					movable.push_back(tmp_pos)
-				elif !white && is_white_piece(piece_at(tmp_pos)):
-					movable.push_back(tmp_pos)
-
 				break
 
 			if direction == "ul":
@@ -258,12 +203,13 @@ func rook(pos: Vector2i, white: bool) -> Array:
 
 			if piece_at(tmp_pos) == "-":
 				movable.push_back(tmp_pos)
+			elif white && !is_white_piece(piece_at(tmp_pos)):
+				movable.push_back(tmp_pos)
+				break
+			elif !white && is_white_piece(piece_at(tmp_pos)):
+				movable.push_back(tmp_pos)
+				break
 			else:
-				if white && !is_white_piece(piece_at(tmp_pos)):
-					movable.push_back(tmp_pos)
-				elif !white && is_white_piece(piece_at(tmp_pos)):
-					movable.push_back(tmp_pos)
-
 				break
 
 			if direction == "u":
@@ -295,75 +241,27 @@ func king(pos: Vector2i, white: bool) -> Array:
 	var movable: Array
 	
 	if pos.x > 0:
-		if piece_at(Vector2i(pos.x - 1, pos.y)) == "-":
-			movable.push_back(Vector2i(pos.x - 1, pos.y))
-		
-		if white && !is_white_piece(piece_at(Vector2i(pos.x - 1, pos.y))):
-			movable.push_back(Vector2i(pos.x - 1, pos.y))
-		elif !white && is_white_piece(piece_at(Vector2i(pos.x - 1, pos.y))):
-			movable.push_back(Vector2i(pos.x - 1, pos.y))
+		place_or_take_if_able(Vector2i(pos.x - 1, pos.y), white, movable)
 		
 		if pos.y > 0:
-			if piece_at(Vector2i(pos.x - 1, pos.y - 1)) == "-":
-				movable.push_back(Vector2i(pos.x - 1, pos.y - 1))
-			
-			if white && !is_white_piece(piece_at(Vector2i(pos.x - 1, pos.y - 1))):
-				movable.push_back(Vector2i(pos.x - 1, pos.y - 1))
-			elif !white && is_white_piece(piece_at(Vector2i(pos.x - 1, pos.y - 1))):
-				movable.push_back(Vector2i(pos.x - 1, pos.y - 1))
+			place_or_take_if_able(Vector2i(pos.x - 1, pos.y - 1), white, movable)
 				
 		if pos.y < GAME.GRID_SIZE - 1:
-			if piece_at(Vector2i(pos.x - 1, pos.y + 1)) == "-":
-				movable.push_back(Vector2i(pos.x - 1, pos.y + 1))
-			
-			if white && !is_white_piece(piece_at(Vector2i(pos.x - 1, pos.y + 1))):
-				movable.push_back(Vector2i(pos.x - 1, pos.y + 1))
-			elif !white && is_white_piece(piece_at(Vector2i(pos.x - 1, pos.y + 1))):
-				movable.push_back(Vector2i(pos.x - 1, pos.y + 1))
+			place_or_take_if_able(Vector2i(pos.x - 1, pos.y + 1), white, movable)
 
 	if pos.x < GAME.GRID_SIZE:
-		if piece_at(Vector2i(pos.x + 1, pos.y)) == "-":
-			movable.push_back(Vector2i(pos.x + 1, pos.y))
-			
-		if white && !is_white_piece(piece_at(Vector2i(pos.x + 1, pos.y))):
-			movable.push_back(Vector2i(pos.x + 1, pos.y))
-		elif !white && is_white_piece(piece_at(Vector2i(pos.x + 1, pos.y))):
-			movable.push_back(Vector2i(pos.x + 1, pos.y))
+		place_or_take_if_able(Vector2i(pos.x + 1, pos.y), white, movable)
 		
 		if pos.y > 0:
-			if piece_at(Vector2i(pos.x + 1, pos.y - 1)) == "-":
-				movable.push_back(Vector2i(pos.x + 1, pos.y - 1))
-				
-			if white && !is_white_piece(piece_at(Vector2i(pos.x + 1, pos.y - 1))):
-				movable.push_back(Vector2i(pos.x + 1, pos.y - 1))
-			elif !white && is_white_piece(piece_at(Vector2i(pos.x + 1, pos.y - 1))):
-				movable.push_back(Vector2i(pos.x + 1, pos.y - 1))
+			place_or_take_if_able(Vector2i(pos.x + 1, pos.y - 1), white, movable)
 				
 		if pos.y < GAME.GRID_SIZE - 1:
-			if piece_at(Vector2i(pos.x + 1, pos.y + 1)) == "-":
-				movable.push_back(Vector2i(pos.x + 1, pos.y + 1))
-			
-			if white && !is_white_piece(piece_at(Vector2i(pos.x + 1, pos.y + 1))):
-				movable.push_back(Vector2i(pos.x + 1, pos.y + 1))
-			elif !white && is_white_piece(piece_at(Vector2i(pos.x + 1, pos.y + 1))):
-				movable.push_back(Vector2i(pos.x + 1, pos.y + 1))
+			place_or_take_if_able(Vector2i(pos.x + 1, pos.y + 1), white, movable)
 
 	if pos.y > 0:
-		if piece_at(Vector2i(pos.x, pos.y - 1)) == "-":
-			movable.push_back(Vector2i(pos.x, pos.y - 1))
-			
-		if white && !is_white_piece(piece_at(Vector2i(pos.x, pos.y - 1))):
-			movable.push_back(Vector2i(pos.x, pos.y - 1))
-		elif !white && is_white_piece(piece_at(Vector2i(pos.x, pos.y - 1))):
-			movable.push_back(Vector2i(pos.x, pos.y - 1))
+		place_or_take_if_able(Vector2i(pos.x, pos.y - 1), white, movable)
 
 	if pos.y < GAME.GRID_SIZE - 1:
-		if piece_at(Vector2i(pos.x, pos.y + 1)) == "-":
-			movable.push_back(Vector2i(pos.x, pos.y + 1))
-			
-		if white && !is_white_piece(piece_at(Vector2i(pos.x, pos.y + 1))):
-			movable.push_back(Vector2i(pos.x, pos.y + 1))
-		elif !white && is_white_piece(piece_at(Vector2i(pos.x, pos.y + 1))):
-			movable.push_back(Vector2i(pos.x, pos.y + 1))
-	
+		place_or_take_if_able(Vector2i(pos.x, pos.y + 1), white, movable)
+
 	return movable
