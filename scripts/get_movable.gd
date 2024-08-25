@@ -46,9 +46,7 @@ func pawn_white(pos: Vector2i) -> Array:
 
 		elif pos.y == 3 && GAME.can_be_captured_ep.x == pos.x - 1 && piece_at(Vector2i(pos.x - 1, 3)) == "p":
 			movable.push_back(Vector2i(pos.x - 1, pos.y - 1))
-			GAME.is_ep_capture = true
 
-	
 	if pos.x < GAME.GRID_SIZE - 1:
 		if piece_at(Vector2i(pos.x + 1, pos.y - 1)) != "-":
 			if !is_white_piece(piece_at(Vector2i(pos.x + 1, pos.y - 1))):
@@ -56,7 +54,6 @@ func pawn_white(pos: Vector2i) -> Array:
 
 		elif pos.y == 3 && GAME.can_be_captured_ep.x == pos.x + 1 && piece_at(Vector2i(pos.x + 1, 3)) == "p":
 			movable.push_back(Vector2i(pos.x + 1, pos.y - 1))
-			GAME.is_ep_capture = true
 
 	return movable
 
@@ -81,19 +78,17 @@ func pawn_black(pos: Vector2i) -> Array:
 			if is_white_piece(piece_at(Vector2i(pos.x - 1, pos.y + 1))):
 				movable.push_back(Vector2i(pos.x - 1, pos.y + 1))
 
-		elif pos.y == GAME.GRID_SIZE - 4 && GAME.can_be_captured_ep.x == pos.x - 1 && piece_at(Vector2i(pos.x - 1, GAME.GRID_SIZE - 4)) == "p":
+		elif pos.y == GAME.GRID_SIZE - 4 && GAME.can_be_captured_ep.x == pos.x - 1 && piece_at(Vector2i(pos.x - 1, GAME.GRID_SIZE - 4)) == "P":
 			movable.push_back(Vector2i(pos.x - 1, pos.y + 1))
-			GAME.is_ep_capture = true
 
 	if pos.x < GAME.GRID_SIZE - 1:
 		if piece_at(Vector2i(pos.x + 1, pos.y + 1)) != "-":
 			if is_white_piece(piece_at(Vector2i(pos.x + 1, pos.y + 1))):
 				movable.push_back(Vector2i(pos.x + 1, pos.y + 1))
 
-		elif pos.y == GAME.GRID_SIZE - 4 && GAME.can_be_captured_ep.x == pos.x + 1 && piece_at(Vector2i(pos.x + 1, GAME.GRID_SIZE - 4)) == "p":
+		elif pos.y == GAME.GRID_SIZE - 4 && GAME.can_be_captured_ep.x == pos.x + 1 && piece_at(Vector2i(pos.x + 1, GAME.GRID_SIZE - 4)) == "P":
 			movable.push_back(Vector2i(pos.x + 1, pos.y + 1))
-			GAME.is_ep_capture = true
-
+			
 	return movable
 
 
@@ -237,6 +232,40 @@ func queen(pos: Vector2i, white: bool) -> Array:
 	return bishop(pos, white) + rook(pos, white)
 
 
+func is_king_side_castle(pos_x: int) -> bool:
+	return pos_x >= GAME.GRID_SIZE / 2
+
+
+func can_castle(white: bool, rook_x: int) -> bool:
+	var king_pos_x: int
+	
+	if white:
+		king_pos_x = GAME.white_king_pos.x
+	else:
+		king_pos_x = GAME.black_king_pos.x
+	
+	if is_king_side_castle(rook_x):
+		for i: int in range(king_pos_x + 1, GAME.GRID_SIZE - 2):
+			if i == rook_x:
+				continue
+			
+			if white && piece_at(Vector2i(i, GAME.GRID_SIZE - 1)) != "-":
+				return false
+			elif !white && piece_at((Vector2i(i, 0))) != "-":
+				return false
+	else:
+		for i: int in range(king_pos_x - 1, 2, -1):
+			if i == rook_x:
+				continue
+			
+			if white && piece_at(Vector2i(i, GAME.GRID_SIZE - 1)) != "-":
+				return false
+			elif !white && piece_at((Vector2i(i, 0))) != "-":
+				return false
+		
+	return true
+
+
 func king(pos: Vector2i, white: bool) -> Array:
 	var movable: Array
 	
@@ -263,5 +292,19 @@ func king(pos: Vector2i, white: bool) -> Array:
 
 	if pos.y < GAME.GRID_SIZE - 1:
 		place_or_take_if_able(Vector2i(pos.x, pos.y + 1), white, movable)
+
+	var castle: Array
+	var rook_y: int
+	
+	if white:
+		castle = GAME.can_castle_white
+		rook_y = GAME.GRID_SIZE - 1
+	else:
+		castle = GAME.can_castle_black
+		rook_y = 0
+	
+	for rook_x: int in castle:
+		if can_castle(white, rook_x):
+			movable.push_back(Vector2i(rook_x, rook_y))
 
 	return movable

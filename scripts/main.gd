@@ -13,7 +13,8 @@ var white_king_pos: Vector2i
 var black_king_pos: Vector2i
 var is_white_turn: bool = true
 var can_be_captured_ep: Vector2i = Vector2i(-1, 0) # y is a countdown for when en passant can happen
-var is_ep_capture: bool = false
+var can_castle_white: Array
+var can_castle_black: Array
 var movable: Array
 var selected_piece_pos: Vector2i = Vector2i(-1, -1)
 
@@ -99,6 +100,13 @@ func set_board(layout: String) -> void:
 		place_piece("P", Vector2i(i, GRID_SIZE - 2)) # White
 
 
+func set_castle(layout: String) -> void:
+	for i: int in mini(GRID_SIZE, len(layout)):
+		if layout[i].to_lower() == "r":
+			can_castle_white.push_back(i)
+			can_castle_black.push_back(i)
+
+
 func highlight_movable(highlight: bool) -> void:
 	if !highlight:
 		for i: int in range(GRID_SIZE):
@@ -172,7 +180,9 @@ func get_movable_sq(pos: Vector2i) -> void:
 			movable = GET_MOVABLE.king(pos, false)
 
 
-func ep_capture() -> void:
+func ep_capture(prev_pos: Vector2i, new_pos: Vector2i) -> void:
+	var is_ep_capture: bool = new_pos.x != prev_pos.x && piece_at(new_pos) == "-"
+	
 	if is_ep_capture:
 		if is_white_turn:
 			place_piece("-", Vector2i(can_be_captured_ep.x, 3))
@@ -181,6 +191,47 @@ func ep_capture() -> void:
 	else:
 		if can_be_captured_ep.y > 0:
 			can_be_captured_ep.y -= 1
+
+
+func is_castling(prev_pos: Vector2i, new_pos: Vector2i) -> bool:
+	var first_piece = piece_at(prev_pos)
+	var other_piece = piece_at(new_pos)
+	return first_piece == "K" && other_piece == "R" || first_piece == "k" && other_piece == "r"
+
+
+func is_king_side_castle(pos_x: int) -> bool:
+	return pos_x >= GRID_SIZE / 2
+
+
+func castling(prev_pos: Vector2i, new_pos: Vector2i) -> void:
+	place_piece("-", prev_pos)
+	place_piece("-", new_pos)
+	
+	if is_white_turn:
+		if is_king_side_castle(new_pos.x):
+			place_piece("K", Vector2i(GRID_SIZE - 2, GRID_SIZE - 1))
+			place_piece("R", Vector2i(GRID_SIZE - 3, GRID_SIZE - 1))
+		else:
+			place_piece("K", Vector2i(2, GRID_SIZE - 1))
+			place_piece("R", Vector2i(3, GRID_SIZE - 1))
+	else:
+		if is_king_side_castle(new_pos.x):
+			place_piece("k", Vector2i(GRID_SIZE - 2, 0))
+			place_piece("r", Vector2i(GRID_SIZE - 3, 0))
+		else:
+			place_piece("k", Vector2i(2, 0))
+			place_piece("r", Vector2i(3, 0))
+
+
+func disable_castle(piece: String, pos: Vector2i) -> void:
+	if piece == "K":
+		can_castle_white = []
+	elif piece == "k":
+		can_castle_black = []
+	elif piece == "R":
+		can_castle_white.erase(pos.x)
+	elif piece == "r":
+		can_castle_black.erase(pos.x)
 
 
 func player_select_piece(click_pos: Vector2i) -> void:
@@ -198,16 +249,20 @@ func player_select_piece(click_pos: Vector2i) -> void:
 
 func player_place_piece(click_pos: Vector2i) -> void:
 	if click_pos in movable:
-		place_piece(piece_at(selected_piece_pos), click_pos)
-		place_piece("-", selected_piece_pos)
+		ep_capture(selected_piece_pos, click_pos)
+		disable_castle(piece_at(selected_piece_pos), selected_piece_pos)
+		print(can_castle_white, " ", can_castle_black)
 		
-		ep_capture()
+		if is_castling(selected_piece_pos, click_pos):
+			castling(selected_piece_pos, click_pos)
+		else:
+			place_piece(piece_at(selected_piece_pos), click_pos)
+			place_piece("-", selected_piece_pos)
 		
 		highlight_movable(false)
 		highlight_prev_move(selected_piece_pos)
 		selected_piece_pos = Vector2i(-1, -1)
 		is_white_turn = !is_white_turn
-		is_ep_capture = false
 	else:
 		player_select_piece(click_pos)
 
@@ -216,6 +271,7 @@ func _ready() -> void:
 	gen_piece_atlas_dict()
 	gen_board()
 	set_board(LAYOUT)
+	set_castle(LAYOUT)
 
 
 func _input(event) -> void:
