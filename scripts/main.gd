@@ -8,7 +8,9 @@ extends Node2D
 const GRID_SIZE: int = 8
 const LAYOUT: String = "rnbqkbnr"
 var piece_atlas_map: Dictionary
-var board_pos: Array
+var board: Array # 2d array
+var attack_white: Array
+var attack_black: Array
 var white_king_pos: Vector2i
 var black_king_pos: Vector2i
 var is_white_turn: bool = true
@@ -39,7 +41,7 @@ func is_white_piece(piece: String) -> bool:
 
 
 func piece_at(loc: Vector2i) -> String:
-	return board_pos[loc.x][loc.y]
+	return board[loc.x][loc.y]
 
 
 func coord_to_chess_sq(coord: Vector2i) -> String:
@@ -52,11 +54,11 @@ func chess_sq_to_coord(chess_sq: String) -> Vector2i:
 
 func gen_board() -> void:
 	for i: int in range(GRID_SIZE):
-		board_pos.push_back([])
+		board.push_back([])
 		
 		for j: int in range(GRID_SIZE):
-			board_pos[i].push_back([])
-			board_pos[i][j] = "-"
+			board[i].push_back([])
+			board[i][j] = "-"
 			
 			if is_dark_sq(Vector2i(i, j)):
 				BOARD_LAYER.set_cell(Vector2i(i, j), 0, Vector2i(1, 0))
@@ -65,7 +67,7 @@ func gen_board() -> void:
 
 
 func place_piece(piece: String, pos: Vector2i) -> void:
-	board_pos[pos.x][pos.y] = piece
+	board[pos.x][pos.y] = piece
 	
 	if piece == "K":
 		white_king_pos = pos
@@ -93,7 +95,11 @@ func place_piece(piece: String, pos: Vector2i) -> void:
 func set_board(layout: String) -> void:
 	for i: int in mini(GRID_SIZE, len(layout)):
 		place_piece(layout[i].to_lower(), Vector2i(i, 0)) # Black
-		place_piece(layout[i].to_upper(), Vector2i(i, GRID_SIZE - 1)) # Black
+		place_piece(layout[i].to_upper(), Vector2i(i, GRID_SIZE - 1)) # White
+		
+		if layout[i].to_lower() == "k":
+			black_king_pos = Vector2i(i, 0)
+			white_king_pos = Vector2i(i, GRID_SIZE - 1)
 		
 	for i: int in GRID_SIZE:
 		place_piece("p", Vector2i(i, 1)) # White
@@ -150,37 +156,10 @@ func highlight_prev_move(pos: Vector2i) -> void:
 	BOARD_LAYER.set_cell(pos, 0, atlas_coord, 0)
 
 
-func get_movable_sq(pos: Vector2i) -> void:
-	movable = []
-
-	match piece_at(pos):
-		"P":
-			movable = GET_MOVABLE.pawn_white(pos)
-		"p":
-			movable = GET_MOVABLE.pawn_black(pos)
-		"N":
-			movable = GET_MOVABLE.knight(pos, true)
-		"n":
-			movable = GET_MOVABLE.knight(pos, false)
-		"B":
-			movable = GET_MOVABLE.bishop(pos, true)
-		"b":
-			movable = GET_MOVABLE.bishop(pos, false)
-		"R":
-			movable = GET_MOVABLE.rook(pos, true)
-		"r":
-			movable = GET_MOVABLE.rook(pos, false)
-		"Q":
-			movable = GET_MOVABLE.queen(pos, true)
-		"q":
-			movable = GET_MOVABLE.queen(pos, false)
-		"K":
-			movable = GET_MOVABLE.king(pos, true)
-		"k":
-			movable = GET_MOVABLE.king(pos, false)
-
-
 func ep_capture(prev_pos: Vector2i, new_pos: Vector2i) -> void:
+	if piece_at(prev_pos).to_lower() != "p":
+		return
+	
 	var is_ep_capture: bool = new_pos.x != prev_pos.x && piece_at(new_pos) == "-"
 	
 	if is_ep_capture:
@@ -194,8 +173,8 @@ func ep_capture(prev_pos: Vector2i, new_pos: Vector2i) -> void:
 
 
 func is_castling(prev_pos: Vector2i, new_pos: Vector2i) -> bool:
-	var first_piece = piece_at(prev_pos)
-	var other_piece = piece_at(new_pos)
+	var first_piece: String = piece_at(prev_pos)
+	var other_piece: String = piece_at(new_pos)
 	return first_piece == "K" && other_piece == "R" || first_piece == "k" && other_piece == "r"
 
 
@@ -234,37 +213,74 @@ func disable_castle(piece: String, pos: Vector2i) -> void:
 		can_castle_black.erase(pos.x)
 
 
+func update_king_pos(prev_pos: Vector2i, new_pos: Vector2i) -> void:
+	if piece_at(prev_pos).to_lower() != "k":
+		return
+	
+	if is_white_piece(piece_at(prev_pos)):
+		white_king_pos = new_pos
+	else:
+		black_king_pos = new_pos
+
+
+func get_attack() -> void:
+	attack_white = []
+	attack_black = []
+
+	for i: int in range(GRID_SIZE):
+		for j: int in range(GRID_SIZE):
+			var sq: String = piece_at(Vector2i(i, j))
+
+			if sq == "-":
+				continue
+
+			if is_white_piece(sq):
+				attack_white += GET_MOVABLE.get_movable(Vector2i(i, j), true)
+			else:
+				attack_black += GET_MOVABLE.get_movable(Vector2i(i, j), true)
+
+
+func is_in_check(white: bool) -> bool:
+	if white:
+		return white_king_pos in attack_black
+	else:
+		return black_king_pos in attack_white
+
+
 func player_select_piece(click_pos: Vector2i) -> void:
 	var piece: String = piece_at(click_pos)
-			
+	
 	if piece != "-":
 		if is_white_turn && is_white_piece(piece) || !is_white_turn && !is_white_piece(piece):
 			selected_piece_pos = click_pos
-			get_movable_sq(click_pos)
+			movable = GET_MOVABLE.get_movable(click_pos, false)
 			highlight_movable(true)
 	else:
 		selected_piece_pos = Vector2i(-1, -1)
 		highlight_movable(false)
 
 
-func player_place_piece(click_pos: Vector2i) -> void:
-	if click_pos in movable:
-		ep_capture(selected_piece_pos, click_pos)
+func player_place_piece(new_pos: Vector2i) -> void:
+	if new_pos in movable:
+		ep_capture(selected_piece_pos, new_pos)
 		disable_castle(piece_at(selected_piece_pos), selected_piece_pos)
-		print(can_castle_white, " ", can_castle_black)
+		update_king_pos(selected_piece_pos, new_pos)
 		
-		if is_castling(selected_piece_pos, click_pos):
-			castling(selected_piece_pos, click_pos)
+		if is_castling(selected_piece_pos, new_pos):
+			castling(selected_piece_pos, new_pos)
 		else:
-			place_piece(piece_at(selected_piece_pos), click_pos)
+			pass
+			place_piece(piece_at(selected_piece_pos), new_pos)
 			place_piece("-", selected_piece_pos)
+		
+		get_attack()
 		
 		highlight_movable(false)
 		highlight_prev_move(selected_piece_pos)
 		selected_piece_pos = Vector2i(-1, -1)
 		is_white_turn = !is_white_turn
 	else:
-		player_select_piece(click_pos)
+		player_select_piece(new_pos)
 
 
 func _ready() -> void:
