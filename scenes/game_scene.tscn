@@ -1,0 +1,179 @@
+[gd_scene load_steps=34 format=3 uid="uid://dyuc2si2hox7x"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_7xmba"]
+[ext_resource type="Script" path="res://scripts/get_movable.gd" id="2_s3q6f"]
+[ext_resource type="Script" path="res://scripts/camera.gd" id="3_s2rkf"]
+[ext_resource type="Texture2D" uid="uid://ddwwvdytfjv8t" path="res://assets/pixel chess_v1.2/board1.png" id="4_8kfka"]
+[ext_resource type="Texture2D" uid="uid://bd6q7kaakqu4e" path="res://assets/chess craft/pieces/10_geometry/highlight-circle.png" id="5_bie7s"]
+[ext_resource type="Texture2D" uid="uid://05pba6v2w2he" path="res://assets/chess craft/pieces/01_classic/w-knight.png" id="6_6hrpn"]
+[ext_resource type="Texture2D" uid="uid://c535da4o3dhws" path="res://assets/chess craft/pieces/01_classic/b-knight.png" id="7_xlarp"]
+[ext_resource type="Texture2D" uid="uid://bysf36vsfogi8" path="res://assets/chess craft/pieces/01_classic/w-pawn.png" id="8_8ltfb"]
+[ext_resource type="Texture2D" uid="uid://bsbl0c004cn4e" path="res://assets/chess craft/pieces/01_classic/b-pawn.png" id="9_4jkdk"]
+[ext_resource type="Texture2D" uid="uid://dgyrynslpbigd" path="res://assets/chess craft/pieces/01_classic/w-king.png" id="10_2wyco"]
+[ext_resource type="Texture2D" uid="uid://cewr2q2c1habw" path="res://assets/chess craft/pieces/01_classic/b-king.png" id="11_afrt2"]
+[ext_resource type="Texture2D" uid="uid://dlwmq08u2nix6" path="res://assets/chess craft/pieces/01_classic/w-queen.png" id="12_armwy"]
+[ext_resource type="Texture2D" uid="uid://d33upcyd76oi2" path="res://assets/chess craft/pieces/01_classic/b-queen.png" id="13_ehntd"]
+[ext_resource type="Texture2D" uid="uid://dobxxix1tpivc" path="res://assets/chess craft/pieces/01_classic/w-rook.png" id="14_8l36p"]
+[ext_resource type="Texture2D" uid="uid://b3b8wxtk4xkmf" path="res://assets/chess craft/pieces/01_classic/b-rook.png" id="15_pye1d"]
+[ext_resource type="Texture2D" uid="uid://c7res7lhw0683" path="res://assets/chess craft/pieces/01_classic/w-bishop.png" id="16_yh4dj"]
+[ext_resource type="Texture2D" uid="uid://daysfc6llw2mf" path="res://assets/chess craft/pieces/01_classic/b-bishop.png" id="17_xi1dv"]
+[ext_resource type="Script" path="res://scenes/promotion_button.gd" id="18_meudf"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_104sv"]
+resource_name = "board"
+texture = ExtResource("4_8kfka")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+1:0/0 = 0
+2:0/0 = 0
+3:0/0 = 0
+4:0/0 = 0
+5:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_03pqu"]
+resource_name = "highlight-circle"
+texture = ExtResource("5_bie7s")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5h576"]
+resource_name = "w-knight"
+texture = ExtResource("6_6hrpn")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_vx2lg"]
+resource_name = "b-knight"
+texture = ExtResource("7_xlarp")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_l08tf"]
+resource_name = "w-pawn"
+texture = ExtResource("8_8ltfb")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_pew56"]
+resource_name = "b-pawn"
+texture = ExtResource("9_4jkdk")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_kdqgp"]
+resource_name = "w-king"
+texture = ExtResource("10_2wyco")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_p8q2h"]
+resource_name = "b-king"
+texture = ExtResource("11_afrt2")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_gq17t"]
+resource_name = "w-queen"
+texture = ExtResource("12_armwy")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_0cees"]
+resource_name = "b-queen"
+texture = ExtResource("13_ehntd")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_5r0nb"]
+resource_name = "w-rook"
+texture = ExtResource("14_8l36p")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_kcui2"]
+resource_name = "b-rook"
+texture = ExtResource("15_pye1d")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_t71xq"]
+resource_name = "w-bishop"
+texture = ExtResource("16_yh4dj")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_frbhh"]
+resource_name = "b-bishop"
+texture = ExtResource("17_xi1dv")
+texture_region_size = Vector2i(128, 128)
+0:0/0 = 0
+
+[sub_resource type="TileSet" id="TileSet_ujwpu"]
+resource_name = "ChessTileSet"
+tile_size = Vector2i(128, 128)
+sources/0 = SubResource("TileSetAtlasSource_104sv")
+sources/2 = SubResource("TileSetAtlasSource_kdqgp")
+sources/1 = SubResource("TileSetAtlasSource_03pqu")
+sources/3 = SubResource("TileSetAtlasSource_p8q2h")
+sources/4 = SubResource("TileSetAtlasSource_gq17t")
+sources/5 = SubResource("TileSetAtlasSource_0cees")
+sources/6 = SubResource("TileSetAtlasSource_5r0nb")
+sources/7 = SubResource("TileSetAtlasSource_kcui2")
+sources/8 = SubResource("TileSetAtlasSource_t71xq")
+sources/9 = SubResource("TileSetAtlasSource_frbhh")
+sources/10 = SubResource("TileSetAtlasSource_5h576")
+sources/11 = SubResource("TileSetAtlasSource_vx2lg")
+sources/12 = SubResource("TileSetAtlasSource_l08tf")
+sources/13 = SubResource("TileSetAtlasSource_pew56")
+
+[node name="Game" type="Node2D"]
+script = ExtResource("1_7xmba")
+
+[node name="GetMovable" type="Node2D" parent="."]
+script = ExtResource("2_s3q6f")
+
+[node name="Camera" type="Camera2D" parent="."]
+script = ExtResource("3_s2rkf")
+
+[node name="BoardLayer" type="TileMapLayer" parent="."]
+use_parent_material = true
+tile_set = SubResource("TileSet_ujwpu")
+
+[node name="PieceLayer" type="TileMapLayer" parent="."]
+use_parent_material = true
+tile_set = SubResource("TileSet_ujwpu")
+
+[node name="HighlightLayer" type="TileMapLayer" parent="."]
+use_parent_material = true
+tile_set = SubResource("TileSet_ujwpu")
+
+[node name="PromotionButton" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 12.0
+offset_bottom = 10.0
+script = ExtResource("18_meudf")
+
+[node name="Queen" type="Button" parent="PromotionButton"]
+layout_mode = 0
+offset_right = 12.0
+offset_bottom = 10.0
+text = "Queen"
+
+[node name="Rook" type="Button" parent="PromotionButton"]
+layout_mode = 0
+offset_right = 12.0
+offset_bottom = 10.0
+text = "Rook"
+
+[node name="Bishop" type="Button" parent="PromotionButton"]
+layout_mode = 0
+offset_right = 12.0
+offset_bottom = 10.0
+text = "Bishop"
+
+[node name="Knight" type="Button" parent="PromotionButton"]
+layout_mode = 0
+offset_right = 12.0
+offset_bottom = 10.0
+text = "Knight"

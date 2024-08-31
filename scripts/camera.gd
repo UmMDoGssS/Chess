@@ -1,7 +1,7 @@
 extends Camera2D
 
 
-@onready var GAME: Node2D = get_node("/root/Game")
+@onready var GAME: Node2D = get_parent()
 const PIXEL: int = 128
 
 func _process(_delta) -> void:
