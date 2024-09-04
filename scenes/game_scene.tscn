@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://scripts/get_movable.gd" id="2_s3q6f"]
 [ext_resource type="Script" path="res://scripts/camera.gd" id="3_s2rkf"]
 [ext_resource type="Texture2D" uid="uid://ddwwvdytfjv8t" path="res://assets/pixel chess_v1.2/board1.png" id="4_8kfka"]
-[ext_resource type="Texture2D" uid="uid://bd6q7kaakqu4e" path="res://assets/chess craft/pieces/10_geometry/highlight-circle.png" id="5_bie7s"]
+[ext_resource type="Texture2D" uid="uid://b4faji6vyp1if" path="res://assets/chess craft/highlight-circle.png" id="5_bie7s"]
 [ext_resource type="Texture2D" uid="uid://05pba6v2w2he" path="res://assets/chess craft/pieces/01_classic/w-knight.png" id="6_6hrpn"]
 [ext_resource type="Texture2D" uid="uid://c535da4o3dhws" path="res://assets/chess craft/pieces/01_classic/b-knight.png" id="7_xlarp"]
 [ext_resource type="Texture2D" uid="uid://bysf36vsfogi8" path="res://assets/chess craft/pieces/01_classic/w-pawn.png" id="8_8ltfb"]
@@ -17,7 +17,7 @@
 [ext_resource type="Texture2D" uid="uid://b3b8wxtk4xkmf" path="res://assets/chess craft/pieces/01_classic/b-rook.png" id="15_pye1d"]
 [ext_resource type="Texture2D" uid="uid://c7res7lhw0683" path="res://assets/chess craft/pieces/01_classic/w-bishop.png" id="16_yh4dj"]
 [ext_resource type="Texture2D" uid="uid://daysfc6llw2mf" path="res://assets/chess craft/pieces/01_classic/b-bishop.png" id="17_xi1dv"]
-[ext_resource type="Script" path="res://scenes/promotion_button.gd" id="18_meudf"]
+[ext_resource type="Script" path="res://scripts/promotion_button.gd" id="18_meudf"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_104sv"]
 resource_name = "board"

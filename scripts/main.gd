@@ -1,6 +1,8 @@
 extends Node2D
 
 
+signal game_end(type)
+
 const GRID_SIZE: int = 8
 const LAYOUT: String = "rnbqkbnr"
 
@@ -10,17 +12,20 @@ var board: Array # 2d array
 var half_turn: int = 0
 var movable: Array
 var all_game_pos: Dictionary # use to check three fold repetion using fen notation
+var turns_since_pawn_moves_or_capture: int
 
 var attack_white: Array
 var attack_black: Array
 var white_king_pos: Vector2i
 var black_king_pos: Vector2i
 
-var can_be_captured_ep: Vector2i = Vector2i(-1, 0) # y is a countdown for when en passant can happen
+var can_be_captured_ep_x: int
+var can_be_captured_ep: bool
 var can_castle_white: Array
 var can_castle_black: Array
 
 var selected_piece_pos: Vector2i = Vector2i(-1, -1)
+var pause_select: bool = false
 
 
 func gen_piece_atlas_dict() -> void:
@@ -138,6 +143,14 @@ func get_fen() -> String:
 	return fen
 
 
+func is_captures(new_pos: Vector2i) -> bool:
+	return piece_at(new_pos) != "-"
+
+
+func is_pawn_moves(pos: Vector2i) -> bool:
+	return piece_at(pos).to_lower() == "p"
+
+
 func is_in_check(white: bool) -> bool:
 	if white:
 		return white_king_pos in attack_black
@@ -170,18 +183,13 @@ func clear_board_highlight() -> void:
 	for i: int in range(GRID_SIZE):
 		for j: int in range(GRID_SIZE):
 			var sq: Vector2i = Vector2i(i, j)
-			var atlas_coord: Vector2i
-			
-			if is_dark_sq(sq):
-				atlas_coord = Vector2i(1, 0)
-			else:
-				atlas_coord = Vector2i(0, 0)
+			var atlas_coord: Vector2i = Vector2i(0, 0) if !is_dark_sq(sq) else Vector2i(1, 0)
 			
 			$BoardLayer.set_cell(sq, 0, atlas_coord, 0)
 
 
-func highlight_movable(highlight: bool) -> void:
-	if !highlight:
+func highlight_movable(enabled: bool) -> void:
+	if !enabled:
 		for i: int in range(GRID_SIZE):
 			for j: int in range(GRID_SIZE):
 				var sq: Vector2i = Vector2i(i, j)
@@ -196,29 +204,14 @@ func highlight_movable(highlight: bool) -> void:
 
 
 func highlight_prev_move(pos: Vector2i) -> void:
-	var atlas_coord: Vector2i
-	
-	if is_dark_sq(pos):
-		atlas_coord = Vector2i(3, 0)
-	else:
-		atlas_coord = Vector2i(2, 0)
+	var atlas_coord: Vector2i = Vector2i(2, 0) if !is_dark_sq(pos) else Vector2i(3, 0)
 	
 	$BoardLayer.set_cell(pos, 0, atlas_coord, 0)
 
 
 func highlight_check(white: bool) -> void:
-	var king_pos: Vector2i
-	var atlas_coord: Vector2i
-	
-	if white:
-		king_pos = white_king_pos
-	else:
-		king_pos = black_king_pos
-	
-	if is_dark_sq(king_pos):
-		atlas_coord = Vector2i(5, 0)
-	else:
-		atlas_coord = Vector2i(4, 0)
+	var king_pos: Vector2i = white_king_pos if white else black_king_pos
+	var atlas_coord: Vector2i = Vector2i(4, 0) if !is_dark_sq(king_pos) else Vector2i(5, 0)
 	
 	$BoardLayer.set_cell(king_pos, 0, atlas_coord, 0)
 
@@ -232,14 +225,45 @@ func highlight(prev_pos: Vector2i) -> void:
 		highlight_check(!is_white_turn())
 
 
-func pawn_promote(pos: Vector2i, white: bool) -> bool:
-	if piece_at(pos).to_lower() != "p":
-		return false
-	elif white && pos.y != 0:
-		return false
-	elif !white && pos.y != GRID_SIZE - 1:
-		return false
+func double_pawn_move(prev_pos: Vector2i, new_pos: Vector2i, white: bool) -> void:
+	if !is_pawn_moves(prev_pos):
+		return
 	
+	if white && new_pos == Vector2i(prev_pos.x, prev_pos.y - 2):
+		can_be_captured_ep_x = new_pos.x
+		can_be_captured_ep = true
+	elif !white && new_pos == Vector2i(prev_pos.x, prev_pos.y + 2):
+		can_be_captured_ep_x = new_pos.x
+		can_be_captured_ep = true
+
+
+func ep_capture(prev_pos: Vector2i, new_pos: Vector2i) -> void:
+	if !is_pawn_moves(prev_pos):
+		return
+	
+	var is_ep_capture: bool = new_pos.x != prev_pos.x && piece_at(new_pos) == "-"
+	
+	if is_ep_capture:
+		if is_white_turn():
+			place_piece("-", Vector2i(can_be_captured_ep_x, 3))
+		else:
+			place_piece("-", Vector2i(can_be_captured_ep_x, GRID_SIZE - 4))
+	else:
+		if can_be_captured_ep:
+			can_be_captured_ep = false
+		else:
+			can_be_captured_ep_x = -2
+
+
+func pawn_promote(pos: Vector2i, white: bool) -> void:
+	if !is_pawn_moves(pos):
+		return
+	elif white && pos.y != 0:
+		return
+	elif !white && pos.y != GRID_SIZE - 1:
+		return
+	
+	pause_select = true
 	$PromotionButton.hide_all(false)
 	$PromotionButton.set_pos(pos)
 	
@@ -250,23 +274,7 @@ func pawn_promote(pos: Vector2i, white: bool) -> bool:
 	else:
 		place_piece(option.to_lower(), pos)
 	
-	return true
-
-
-func ep_capture(prev_pos: Vector2i, new_pos: Vector2i) -> void:
-	if piece_at(prev_pos).to_lower() != "p":
-		return
-	
-	var is_ep_capture: bool = new_pos.x != prev_pos.x && piece_at(new_pos) == "-"
-	
-	if is_ep_capture:
-		if is_white_turn():
-			place_piece("-", Vector2i(can_be_captured_ep.x, 3))
-		else:
-			place_piece("-", Vector2i(can_be_captured_ep.x, GRID_SIZE - 4))
-	else:
-		if can_be_captured_ep.y > 0:
-			can_be_captured_ep.y -= 1
+	pause_select = false
 
 
 func is_castling(prev_pos: Vector2i, new_pos: Vector2i) -> bool:
@@ -276,7 +284,6 @@ func is_castling(prev_pos: Vector2i, new_pos: Vector2i) -> bool:
 
 
 func is_king_side_castle(pos_x: int) -> bool:
-	@warning_ignore("integer_division")
 	return pos_x >= GRID_SIZE / 2
 
 
@@ -341,15 +348,38 @@ func get_attack() -> void:
 func game_state() -> void:
 	if !has_legal_move(!is_white_turn()):
 		if is_in_check(!is_white_turn()):
+			pause_select = true
+			emit_signal("game_end", "CHECKMATE")
 			print("CHECKMATE")
 			return
 		else:
+			pause_select = true
+			emit_signal("game_end", "STALEMATE")
 			print("STALEMATE")
 			return
 	
 	if all_game_pos[get_fen()] == 2:
+		pause_select = true
+		emit_signal("game_end", "THREE FOLD REPETION")
 		print("THREE FOLD REPETION")
 		return
+	
+	if turns_since_pawn_moves_or_capture == 100:
+		pause_select = true
+		emit_signal("game_end", "50 MOVE RULE")
+		print("50 MOVE RULE")
+		return
+
+
+func get_turns_since_pawn_moves_or_capture(prev_pos: Vector2i, new_pos: Vector2i) -> void:
+	if is_pawn_moves(prev_pos):
+		turns_since_pawn_moves_or_capture = 0
+		return
+	elif is_captures(new_pos):
+		turns_since_pawn_moves_or_capture = 0
+		return
+	
+	turns_since_pawn_moves_or_capture += 1
 
 
 func player_select_piece(click_pos: Vector2i) -> void:
@@ -360,6 +390,9 @@ func player_select_piece(click_pos: Vector2i) -> void:
 			selected_piece_pos = click_pos
 			movable = $GetMovable.get_movable(click_pos, false)
 			highlight_movable(true)
+		else:
+			selected_piece_pos = Vector2i(-1, -1)
+			highlight_movable(false)
 	else:
 		selected_piece_pos = Vector2i(-1, -1)
 		highlight_movable(false)
@@ -367,9 +400,11 @@ func player_select_piece(click_pos: Vector2i) -> void:
 
 func player_place_piece(new_pos: Vector2i) -> void:
 	if new_pos in movable:
+		double_pawn_move(selected_piece_pos, new_pos, is_white_turn())
 		ep_capture(selected_piece_pos, new_pos)
 		disable_castle(piece_at(selected_piece_pos), selected_piece_pos)
 		update_king_pos(selected_piece_pos, new_pos)
+		get_turns_since_pawn_moves_or_capture(selected_piece_pos, new_pos)
 		
 		if is_castling(selected_piece_pos, new_pos):
 			castling(selected_piece_pos, new_pos)
@@ -377,6 +412,7 @@ func player_place_piece(new_pos: Vector2i) -> void:
 			place_piece(piece_at(selected_piece_pos), new_pos)
 			place_piece("-", selected_piece_pos)
 		
+		await pawn_promote(new_pos, is_white_turn())
 		get_attack()
 		
 		if all_game_pos.get(get_fen()) == null:
@@ -387,11 +423,8 @@ func player_place_piece(new_pos: Vector2i) -> void:
 		highlight(selected_piece_pos)
 		game_state()
 		
-		var is_pawn_promotion = await pawn_promote(new_pos, is_white_turn())
-		
-		if !is_pawn_promotion: # the function runs asynchronously so if this is not done then it will run twice
-			selected_piece_pos = Vector2i(-1, -1)
-			half_turn += 1
+		selected_piece_pos = Vector2i(-1, -1)
+		half_turn += 1
 	else:
 		player_select_piece(new_pos)
 
@@ -406,7 +439,7 @@ func _ready() -> void:
 
 func _input(event) -> void:
 	if event is InputEventMouseButton:
-		if event.get_button_index() != MOUSE_BUTTON_LEFT || !event.is_pressed():
+		if event.get_button_index() != MOUSE_BUTTON_LEFT || !event.is_pressed() || pause_select:
 			return
 			
 		var click_pos: Vector2i = $BoardLayer.local_to_map(get_local_mouse_position())

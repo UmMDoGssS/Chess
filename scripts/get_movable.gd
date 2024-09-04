@@ -1,6 +1,7 @@
 extends Node2D
 
-@onready var GAME: Node2D = get_parent()
+
+@onready var Game: Node2D = get_parent()
 var board: Array
 
 
@@ -13,8 +14,8 @@ func is_white_piece(piece: String) -> bool:
 
 
 func get_movable(pos: Vector2i, only_attacks: bool, game_board: Array = []) -> Array:
-	if game_board == []:
-		board = GAME.board.duplicate(true)
+	if game_board.is_empty():
+		board = Game.board.duplicate(true)
 	else:
 		board = game_board.duplicate(true)
 	
@@ -49,9 +50,9 @@ func get_movable(pos: Vector2i, only_attacks: bool, game_board: Array = []) -> A
 
 func has_no_attack(pos: Vector2i, white: bool) -> bool:
 	if white:
-		return !(pos in GAME.attack_black)
+		return !(pos in Game.attack_black)
 	else:
-		return !(pos in GAME.attack_white)
+		return !(pos in Game.attack_white)
 
 
 func does_reveal_check(prev_pos: Vector2i, new_pos: Vector2i, white: bool) -> bool:
@@ -64,8 +65,8 @@ func does_reveal_check(prev_pos: Vector2i, new_pos: Vector2i, white: bool) -> bo
 	var attack: Array = []
 	var king_pos: Vector2i
 
-	for i: int in range(GAME.GRID_SIZE):
-		for j: int in range(GAME.GRID_SIZE):
+	for i: int in range(Game.GRID_SIZE):
+		for j: int in range(Game.GRID_SIZE):
 			var piece: String = piece_at(Vector2i(i, j))
 
 			if piece == "-":
@@ -83,7 +84,8 @@ func does_reveal_check(prev_pos: Vector2i, new_pos: Vector2i, white: bool) -> bo
 			elif !white && is_white_piece(piece):
 				attack += get_movable(Vector2i(i, j), true, tmp_board)
 		
-	board = GAME.board.duplicate(true)
+	board = Game.board.duplicate(true)
+	
 	return king_pos in attack
 
 
@@ -111,25 +113,19 @@ func pawn_white(pos: Vector2i, only_attacks: bool) -> Array:
 		pass
 	elif piece_at(Vector2i(pos.x, pos.y - 1)) != "-":
 		pass
-	elif does_reveal_check(pos, Vector2i(pos.x, pos.y - 1), true):
-		pass
 	else:
-		movable.push_back(Vector2i(pos.x, pos.y - 1))
-
-	if only_attacks:
-		pass
-	elif pos.y != GAME.GRID_SIZE - 2:
-		pass
-	elif piece_at(Vector2i(pos.x, pos.y - 1)) != "-":
-		pass
-	elif piece_at(Vector2i(pos.x, pos.y - 2)) != "-":
-		pass
-	elif does_reveal_check(pos, Vector2i(pos.x, pos.y - 2), true):
-		pass
-	else:
-		movable.push_back(Vector2i(pos.x, pos.y - 2))
-		GAME.can_be_captured_ep = Vector2i(pos.x, 1)
-
+		if !does_reveal_check(pos, Vector2i(pos.x, pos.y - 1), true):
+			movable.push_back(Vector2i(pos.x, pos.y - 1))
+		
+		if pos.y != Game.GRID_SIZE - 2:
+			pass
+		elif piece_at(Vector2i(pos.x, pos.y - 2)) != "-":
+			pass
+		elif does_reveal_check(pos, Vector2i(pos.x, pos.y - 2), true):
+			pass
+		else:
+			movable.push_back(Vector2i(pos.x, pos.y - 2))
+	
 	if pos.x > 0:
 		if only_attacks:
 			movable.push_back(Vector2i(pos.x - 1, pos.y - 1))
@@ -138,10 +134,10 @@ func pawn_white(pos: Vector2i, only_attacks: bool) -> Array:
 				if !does_reveal_check(pos, Vector2i(pos.x - 1, pos.y - 1), true):
 					movable.push_back(Vector2i(pos.x - 1, pos.y - 1))
 					
-			elif pos.y == 3 && GAME.can_be_captured_ep.x == pos.x - 1 && piece_at(Vector2i(pos.x - 1, 3)) == "p":
+			elif pos.y == 3 && Game.can_be_captured_ep.x == pos.x - 1 && piece_at(Vector2i(pos.x - 1, 3)) == "p":
 				movable.push_back(Vector2i(pos.x - 1, pos.y - 1))
 
-	if pos.x < GAME.GRID_SIZE - 1:
+	if pos.x < Game.GRID_SIZE - 1:
 		if only_attacks:
 			movable.push_back(Vector2i(pos.x + 1, pos.y - 1))
 		else:
@@ -149,7 +145,7 @@ func pawn_white(pos: Vector2i, only_attacks: bool) -> Array:
 				if !does_reveal_check(pos, Vector2i(pos.x + 1, pos.y - 1), true):
 					movable.push_back(Vector2i(pos.x + 1, pos.y - 1))
 					
-			elif pos.y == 3 && GAME.can_be_captured_ep.x == pos.x + 1 && piece_at(Vector2i(pos.x + 1, 3)) == "p":
+			elif pos.y == 3 && Game.can_be_captured_ep_x == pos.x + 1 && piece_at(Vector2i(pos.x + 1, 3)) == "p":
 				movable.push_back(Vector2i(pos.x + 1, pos.y - 1))
 
 	return movable
@@ -162,24 +158,18 @@ func pawn_black(pos: Vector2i, only_attacks: bool) -> Array:
 		pass
 	elif piece_at(Vector2i(pos.x, pos.y + 1)) != "-":
 		pass
-	elif does_reveal_check(pos, Vector2i(pos.x, pos.y + 1), false):
-		pass
 	else:
-		movable.push_back(Vector2i(pos.x, pos.y + 1))
-
-	if only_attacks:
-		pass
-	elif pos.y != 1:
-		pass
-	elif piece_at(Vector2i(pos.x, pos.y + 2)) != "-":
-		pass
-	elif piece_at(Vector2i(pos.x, pos.y + 1)) != "-":
-		pass
-	elif does_reveal_check(pos, Vector2i(pos.x, pos.y + 2), false):
-		pass
-	else:
-		movable.push_back(Vector2i(pos.x, pos.y + 2))
-		GAME.can_be_captured_ep = Vector2i(pos.x, 1)
+		if !does_reveal_check(pos, Vector2i(pos.x, pos.y + 1), false):
+			movable.push_back(Vector2i(pos.x, pos.y + 1))
+		
+		if pos.y != 1:
+			pass
+		elif piece_at(Vector2i(pos.x, pos.y + 2)) != "-":
+			pass
+		elif does_reveal_check(pos, Vector2i(pos.x, pos.y + 2), false):
+			pass
+		else:
+			movable.push_back(Vector2i(pos.x, pos.y + 2))
 
 	if pos.x > 0:
 		if only_attacks:
@@ -189,10 +179,10 @@ func pawn_black(pos: Vector2i, only_attacks: bool) -> Array:
 				if !does_reveal_check(pos, Vector2i(pos.x - 1, pos.y + 1), false):
 					movable.push_back(Vector2i(pos.x - 1, pos.y + 1))
 					
-			elif pos.y == GAME.GRID_SIZE - 4 && GAME.can_be_captured_ep.x == pos.x - 1 && piece_at(Vector2i(pos.x - 1, GAME.GRID_SIZE - 4)) == "P":
+			elif pos.y == Game.GRID_SIZE - 4 && Game.can_be_captured_ep_x == pos.x - 1 && piece_at(Vector2i(pos.x - 1, Game.GRID_SIZE - 4)) == "P":
 				movable.push_back(Vector2i(pos.x - 1, pos.y + 1))
 
-	if pos.x < GAME.GRID_SIZE - 1:
+	if pos.x < Game.GRID_SIZE - 1:
 		if only_attacks:
 			movable.push_back(Vector2i(pos.x + 1, pos.y + 1))
 		else:
@@ -200,7 +190,7 @@ func pawn_black(pos: Vector2i, only_attacks: bool) -> Array:
 				if !does_reveal_check(pos, Vector2i(pos.x + 1, pos.y + 1), false):
 					movable.push_back(Vector2i(pos.x + 1, pos.y + 1))
 					
-			elif pos.y == GAME.GRID_SIZE - 4 && GAME.can_be_captured_ep.x == pos.x + 1 && piece_at(Vector2i(pos.x + 1, GAME.GRID_SIZE - 4)) == "P":
+			elif pos.y == Game.GRID_SIZE - 4 && Game.can_be_captured_ep.x == pos.x + 1 && piece_at(Vector2i(pos.x + 1, Game.GRID_SIZE - 4)) == "P":
 				movable.push_back(Vector2i(pos.x + 1, pos.y + 1))
 
 	return movable
@@ -212,25 +202,25 @@ func knight(pos: Vector2i, white: bool, only_attacks: bool) -> Array:
 	if pos.x > 1 && pos.y > 0:
 		move_or_take_if_able(pos, Vector2i(pos.x - 2, pos.y - 1), white, movable, only_attacks)
 
-	if pos.x > 1 && pos.y < GAME.GRID_SIZE - 1:
+	if pos.x > 1 && pos.y < Game.GRID_SIZE - 1:
 		move_or_take_if_able(pos, Vector2i(pos.x - 2, pos.y + 1), white, movable, only_attacks)
 
-	if pos.x < GAME.GRID_SIZE - 2 && pos.y > 0:
+	if pos.x < Game.GRID_SIZE - 2 && pos.y > 0:
 		move_or_take_if_able(pos, Vector2i(pos.x + 2, pos.y - 1), white, movable, only_attacks)
 
-	if pos.x < GAME.GRID_SIZE - 2 && pos.y < GAME.GRID_SIZE - 1:
+	if pos.x < Game.GRID_SIZE - 2 && pos.y < Game.GRID_SIZE - 1:
 		move_or_take_if_able(pos, Vector2i(pos.x + 2, pos.y + 1), white, movable, only_attacks)
 
 	if pos.x > 0 && pos.y > 1:
 		move_or_take_if_able(pos, Vector2i(pos.x - 1, pos.y - 2), white, movable, only_attacks)
 
-	if pos.x < GAME.GRID_SIZE - 1 && pos.y > 1:
+	if pos.x < Game.GRID_SIZE - 1 && pos.y > 1:
 		move_or_take_if_able(pos, Vector2i(pos.x + 1, pos.y - 2), white, movable, only_attacks)
 
-	if pos.x > 0 && pos.y < GAME.GRID_SIZE - 2:
+	if pos.x > 0 && pos.y < Game.GRID_SIZE - 2:
 		move_or_take_if_able(pos, Vector2i(pos.x - 1, pos.y + 2), white, movable, only_attacks)
 
-	if pos.x < GAME.GRID_SIZE - 1 && pos.y < GAME.GRID_SIZE - 2:
+	if pos.x < Game.GRID_SIZE - 1 && pos.y < Game.GRID_SIZE - 2:
 		move_or_take_if_able(pos, Vector2i(pos.x + 1, pos.y + 2), white, movable, only_attacks)
 
 	return movable
@@ -252,7 +242,7 @@ func bishop(pos: Vector2i, white: bool, only_attacks: bool) -> Array:
 		elif direction == "dr":
 			ray = Vector2i(1, 1)
 
-		while pos.x + ray.x >= 0 && pos.x + ray.x < GAME.GRID_SIZE && pos.y + ray.y >= 0 && pos.y + ray.y < GAME.GRID_SIZE:
+		while pos.x + ray.x >= 0 && pos.x + ray.x < Game.GRID_SIZE && pos.y + ray.y >= 0 && pos.y + ray.y < Game.GRID_SIZE:
 			var tmp_pos: Vector2i = Vector2i(pos.x + ray.x, pos.y + ray.y)
 			
 			if !only_attacks:
@@ -311,7 +301,7 @@ func rook(pos: Vector2i, white: bool, only_attacks: bool) -> Array:
 		elif direction == "r":
 			ray = Vector2i(1, 0)
 
-		while pos.x + ray.x >= 0 && pos.x + ray.x < GAME.GRID_SIZE && pos.y + ray.y >= 0 && pos.y + ray.y < GAME.GRID_SIZE:
+		while pos.x + ray.x >= 0 && pos.x + ray.x < Game.GRID_SIZE && pos.y + ray.y >= 0 && pos.y + ray.y < Game.GRID_SIZE:
 			var tmp_pos: Vector2i = Vector2i(pos.x + ray.x, pos.y + ray.y)
 
 			if !only_attacks:
@@ -355,81 +345,53 @@ func queen(pos: Vector2i, white: bool, only_attacks: bool) -> Array:
 
 
 func is_king_side_castle(pos_x: int) -> bool:
-	return pos_x >= GAME.GRID_SIZE / 2
+	return pos_x >= Game.GRID_SIZE / 2
 
 
 func can_castle(white: bool, rook_x: int) -> bool:
-	var king_pos_x: int
-
-	if white:
-		king_pos_x = GAME.white_king_pos.x
-	else:
-		king_pos_x = GAME.black_king_pos.x
+	var king_pos_x: int = Game.white_king_pos.x if white else Game.black_king_pos.x
+	var tmp_y: int = Game.GRID_SIZE - 1 if white else 0
 
 	if is_king_side_castle(rook_x):
-		for i: int in range(king_pos_x + 1, GAME.GRID_SIZE - 1):
-			if i == rook_x:
+		for tmp_x: int in range(king_pos_x + 1, Game.GRID_SIZE - 1):
+			if tmp_x == rook_x:
 				continue
 
-			if !has_no_attack(Vector2i(i, GAME.GRID_SIZE - 1), white):
+			if !has_no_attack(Vector2i(tmp_x, tmp_y), white):
 				return false
 
-			if white && piece_at(Vector2i(i, GAME.GRID_SIZE - 1)) != "-":
+			if piece_at(Vector2i(tmp_x, tmp_y)) != "-":
 				return false
-			elif !white && piece_at((Vector2i(i, 0))) != "-":
-				return false
+				
 	else:
-		for i: int in range(king_pos_x - 1, 0, -1):
-			if i == rook_x:
+		for tmp_x: int in range(king_pos_x - 1, 0, -1):
+			if tmp_x == rook_x:
 				continue
 
-			if !has_no_attack(Vector2i(i, GAME.GRID_SIZE - 1), white):
+			if !has_no_attack(Vector2i(tmp_x, tmp_y), white):
 				return false
 
-			if white && piece_at(Vector2i(i, GAME.GRID_SIZE - 1)) != "-":
-				return false
-			elif !white && piece_at((Vector2i(i, 0))) != "-":
+			if piece_at(Vector2i(tmp_x, tmp_y)) != "-":
 				return false
 
-	return !GAME.is_in_check(white)
+	return !Game.is_in_check(white)
 
 
 func king(pos: Vector2i, white: bool, only_attacks) -> Array:
 	var movable: Array
-
-	if pos.x > 0:
-		move_or_take_if_able(pos, Vector2i(pos.x - 1, pos.y), white, movable, only_attacks)
-
-		if pos.y > 0:
-			move_or_take_if_able(pos, Vector2i(pos.x - 1, pos.y - 1), white, movable, only_attacks)
-
-		if pos.y < GAME.GRID_SIZE - 1:
-			move_or_take_if_able(pos, Vector2i(pos.x - 1, pos.y + 1), white, movable, only_attacks)
-
-	if pos.x < GAME.GRID_SIZE - 1:
-		move_or_take_if_able(pos, Vector2i(pos.x + 1, pos.y), white, movable, only_attacks)
-
-		if pos.y > 0:
-			move_or_take_if_able(pos, Vector2i(pos.x + 1, pos.y - 1), white, movable, only_attacks)
-
-		if pos.y < GAME.GRID_SIZE - 1:
-			move_or_take_if_able(pos, Vector2i(pos.x + 1, pos.y + 1), white, movable, only_attacks)
-
-	if pos.y > 0:
-		move_or_take_if_able(pos, Vector2i(pos.x, pos.y - 1), white, movable, only_attacks)
-
-	if pos.y < GAME.GRID_SIZE - 1:
-		move_or_take_if_able(pos, Vector2i(pos.x, pos.y + 1), white, movable, only_attacks)
-
-	var castle: Array
-	var rook_y: int
-
-	if white:
-		castle = GAME.can_castle_white
-		rook_y = GAME.GRID_SIZE - 1
-	else:
-		castle = GAME.can_castle_black
-		rook_y = 0
+	
+	for i: int in range(pos.x - 1, pos.x + 2):
+		for j: int in range(pos.y - 1, pos.y + 2):
+			var new_pos: Vector2i = Vector2i(i, j)
+			
+			if new_pos == pos:
+				continue
+			
+			if new_pos.x >= 0 && new_pos.y >= 0 && new_pos.x < Game.GRID_SIZE && new_pos.y < Game.GRID_SIZE:
+				move_or_take_if_able(pos, new_pos, white, movable, only_attacks)
+	
+	var castle: Array = Game.can_castle_white if white else Game.can_castle_black
+	var rook_y: int = Game.GRID_SIZE - 1 if white else 0
 
 	for rook_x: int in castle:
 		if can_castle(white, rook_x):
