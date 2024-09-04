@@ -17,7 +17,7 @@
 [ext_resource type="Texture2D" uid="uid://b3b8wxtk4xkmf" path="res://assets/chess craft/pieces/01_classic/b-rook.png" id="15_pye1d"]
 [ext_resource type="Texture2D" uid="uid://c7res7lhw0683" path="res://assets/chess craft/pieces/01_classic/w-bishop.png" id="16_yh4dj"]
 [ext_resource type="Texture2D" uid="uid://daysfc6llw2mf" path="res://assets/chess craft/pieces/01_classic/b-bishop.png" id="17_xi1dv"]
-[ext_resource type="Script" path="res://scripts/promotion_button.gd" id="18_meudf"]
+[ext_resource type="Script" path="res://scripts/promotion_button.gd" id="18_l766r"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_104sv"]
 resource_name = "board"
@@ -152,7 +152,7 @@ layout_mode = 3
 anchors_preset = 0
 offset_right = 12.0
 offset_bottom = 10.0
-script = ExtResource("18_meudf")
+script = ExtResource("18_l766r")
 
 [node name="Queen" type="Button" parent="PromotionButton"]
 layout_mode = 0
